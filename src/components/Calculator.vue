@@ -8,9 +8,8 @@ import usd from '../assets/usd.svg'
 import btc from '../assets/btc.svg'
 import eth from '../assets/eth.svg'
 import { computed } from 'vue'
-import { numberWithSpaces } from '../helpers'
+import { numberWithSpaces, defineDecimals } from '../helpers'
 
-// hashmap {name:image}
 const currencyList = [
   { name: 'usd', icon: usd, default: 1000 },
   { name: 'eur', icon: eur, default: 1000 },
@@ -89,10 +88,10 @@ function handleChange(text, e) {
   if (isNaN(value)) return
   if (text === 'from') {
     fromValue.value = String(value)
-    toValue.value = String(value * conversionRate.value.conversion_rate)
+    toValue.value = String((value * conversionRate.value.conversion_rate).toFixed(defineDecimals(to.value)))
   } else {
     toValue.value = String(value)
-    fromValue.value = String(value / conversionRate.value.conversion_rate)
+    fromValue.value = String((value / conversionRate.value.conversion_rate).toFixed(defineDecimals(from.value)))
   }
 }
 </script>
