@@ -9,25 +9,26 @@ import btc from '../assets/btc.svg'
 import eth from '../assets/eth.svg'
 import { computed } from 'vue'
 import { numberWithSpaces, defineDecimals } from '../helpers'
-
+// константы
 const currencyList = [
   { name: 'usd', icon: usd, default: 1000 },
   { name: 'eur', icon: eur, default: 1000 },
   { name: 'btc', icon: btc, default: 1 },
   { name: 'eth', icon: eth, default: 1 },
 ]
-//  Essential variables 🐱‍👤
-const fromOpened = ref(false)
-const toOpened = ref(false)
+//  Essential variables/refs 🐱‍👤
+const fromOpened = ref(false) //boolean - открыт ли лист
+const toOpened = ref(false) // boolean
 
-const fromCurrency = ref(currencyList[0].name)
-const toCurrency = ref(currencyList[2].name)
+const fromCurrency = ref(currencyList[0].name) // sttring - название валюты
+const toCurrency = ref(currencyList[2].name) // string
 
-const fromValue = ref(String(currencyList[0].default))
+const fromValue = ref(String(currencyList[0].default)) // string - начальное количество
 const toValue = ref('')
 
 let conversionRate = ref({ conversion_rate: 0, conversion_rate_usd: 0 })
-// onMounted
+// Essential variables end 🐱‍👤
+
 onMounted(async () => {
   window.addEventListener('click', () => {
     if (fromOpened.value || toOpened.value) {
@@ -41,7 +42,8 @@ onMounted(async () => {
   conversionRate.value = data
   handleChange('from', fromValue.value)
 })
-// Dropdown logic 🎃
+
+// Dropdown logic below 🎃
 function handleToggle(text) {
   if (text === 'from') {
     fromOpened.value = !fromOpened.value
@@ -55,7 +57,7 @@ function handleToggle(text) {
 }
 
 async function handleSelect(name, text) {
-  // если совпадает с уже имеющейся валютой просто меняю местами 🥝
+  // если from и to совпадают меняю местами 🥝 чтобы избежать usd --> usd или btc --> btc
   if (name === fromCurrency.value || name === toCurrency.value) {
     if (text === 'from') {
       toCurrency.value = fromCurrency.value
@@ -66,9 +68,6 @@ async function handleSelect(name, text) {
       fromCurrency.value = toCurrency.value
       toCurrency.value = name
     }
-    const { data } = await getConversionRate(fromCurrency.value, toCurrency.value)
-    conversionRate.value = data
-    handleChange('from', fromValue.value)
   } // если не совпадает то тупо ставлю что есть 🥝
   else {
     if (text === 'from') {
@@ -77,13 +76,12 @@ async function handleSelect(name, text) {
     } else {
       toCurrency.value = name
     }
-
-    const { data } = await getConversionRate(fromCurrency.value, toCurrency.value)
-    conversionRate.value = data
-    handleChange('from', fromValue.value)
   }
+  const { data } = await getConversionRate(fromCurrency.value, toCurrency.value)
+  conversionRate.value = data
+  handleChange('from', fromValue.value)
 }
-// Input logic 🍉
+// Input logic below 🍉
 
 const rate = computed(() => {
   let output = fromValue.value * conversionRate.value.conversion_rate_usd

@@ -12,6 +12,7 @@ const attrs = useAttrs()
 const { value } = toRefs(props)
 
 function preventTypingText(e) {
+  // разрешаю ставить точку для типа float
   if (isNaN(Number(e.key)) && e.keyCode !== 46) {
     e.preventDefault()
   }
