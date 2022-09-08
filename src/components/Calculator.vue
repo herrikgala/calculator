@@ -16,13 +16,18 @@ const currencyList = [
   { name: 'btc', icon: btc, default: 1 },
   { name: 'eth', icon: eth, default: 1 },
 ]
+//  Essential variables 🐱‍👤
 const fromOpened = ref(false)
 const toOpened = ref(false)
 
-const from = ref(currencyList[0].name)
-const to = ref(currencyList[2].name)
-let conversionRate = ref({ conversion_rate: 0, conversion_rate_usd: 0 })
+const fromCurrency = ref(currencyList[0].name)
+const toCurrency = ref(currencyList[2].name)
 
+const fromValue = ref(String(currencyList[0].default))
+const toValue = ref('')
+
+let conversionRate = ref({ conversion_rate: 0, conversion_rate_usd: 0 })
+// onMounted
 onMounted(async () => {
   window.addEventListener('click', () => {
     if (fromOpened.value || toOpened.value) {
@@ -32,7 +37,7 @@ onMounted(async () => {
       return
     }
   })
-  const { data } = await getConversionRate(from.value, to.value)
+  const { data } = await getConversionRate(fromCurrency.value, toCurrency.value)
   conversionRate.value = data
   handleChange('from', fromValue.value)
 })
@@ -50,32 +55,36 @@ function handleToggle(text) {
 }
 
 async function handleSelect(name, text) {
-  // если совпадает с уже имеющейся валютой просто меняю местами
-  if (name === from.value || name === to.value) {
+  // если совпадает с уже имеющейся валютой просто меняю местами 🥝
+  if (name === fromCurrency.value || name === toCurrency.value) {
     if (text === 'from') {
-      // меняю валюты
-      to.value = from.value
-      from.value = name
+      toCurrency.value = fromCurrency.value
+      fromCurrency.value = name
+      //   ставлю дефолтное значение для валюты
+      fromValue.value = String(currencyList.find((el) => fromCurrency.value === el.name).default)
     } else {
-      // меняю валюты
-      from.value = to.value
-      to.value = name
+      fromCurrency.value = toCurrency.value
+      toCurrency.value = name
     }
-    const { data } = await getConversionRate(from.value, to.value)
+    const { data } = await getConversionRate(fromCurrency.value, toCurrency.value)
     conversionRate.value = data
     handleChange('from', fromValue.value)
-  } else {
-    if (text === 'from') from.value = name
-    else to.value = name
+  } // если не совпадает то тупо ставлю что есть 🥝
+  else {
+    if (text === 'from') {
+      fromCurrency.value = name
+      fromValue.value = String(currencyList.find((el) => fromCurrency.value === el.name).default)
+    } else {
+      toCurrency.value = name
+    }
 
-    const { data } = await getConversionRate(from.value, to.value)
+    const { data } = await getConversionRate(fromCurrency.value, toCurrency.value)
     conversionRate.value = data
     handleChange('from', fromValue.value)
   }
 }
 // Input logic 🍉
-const fromValue = ref(currencyList[0].default)
-const toValue = ref('')
+
 const rate = computed(() => {
   let output = fromValue.value * conversionRate.value.conversion_rate_usd
   output = Math.ceil(output * (1 + 0.01) * 100) / 100
@@ -88,10 +97,10 @@ function handleChange(text, e) {
   if (isNaN(value)) return
   if (text === 'from') {
     fromValue.value = String(value)
-    toValue.value = String((value * conversionRate.value.conversion_rate).toFixed(defineDecimals(to.value)))
+    toValue.value = numberWithSpaces((value * conversionRate.value.conversion_rate).toFixed(defineDecimals(toCurrency.value)))
   } else {
     toValue.value = String(value)
-    fromValue.value = String((value / conversionRate.value.conversion_rate).toFixed(defineDecimals(from.value)))
+    fromValue.value = numberWithSpaces((value / conversionRate.value.conversion_rate).toFixed(defineDecimals(fromCurrency.value)))
   }
 }
 </script>
@@ -101,13 +110,13 @@ function handleChange(text, e) {
     <div class="topLine"></div>
     <div class="clientText">
       <label for="">Amount i have</label>
-      <span style="margin-left: auto; opacity: 0.8; font-size: 16px">{{ `${fromValue} ${from.toUpperCase()}` }}</span>
+      <span style="margin-left: auto; opacity: 0.8; font-size: 16px">{{ `${fromValue} ${fromCurrency.toUpperCase()}` }}</span>
     </div>
     <div class="interactive">
       <UDropdown
         :currency-list="currencyList"
         :is-opened="fromOpened"
-        :active="from"
+        :active="fromCurrency"
         @toggle="handleToggle('from')"
         @select="(name) => handleSelect(name, 'from')"
       />
@@ -118,7 +127,7 @@ function handleChange(text, e) {
       <UDropdown
         :currency-list="currencyList"
         :is-opened="toOpened"
-        :active="to"
+        :active="toCurrency"
         @toggle="handleToggle('to')"
         @select="(name) => handleSelect(name, 'to')"
       />
