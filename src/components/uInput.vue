@@ -20,7 +20,7 @@ function preventTypingText(e) {
 
 <template>
   <div>
-    <input type="text" v-bind="attrs" :value="value" @input="emit('change')" @keypress="preventTypingText" />
+    <input type="text" v-bind="attrs" :value="value" @input="(e) => emit('change', e.target.value)" @keypress="preventTypingText" />
   </div>
 </template>
 

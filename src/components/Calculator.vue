@@ -7,11 +7,13 @@ import eur from '../assets/eur.svg'
 import usd from '../assets/usd.svg'
 import btc from '../assets/btc.svg'
 import eth from '../assets/eth.svg'
+import { computed } from 'vue'
+import { numberWithSpaces } from '../helpers'
 
 // hashmap {name:image}
 const currencyList = [
-  { name: 'usd', icon: usd, default: 100 },
-  { name: 'eur', icon: eur, default: 100 },
+  { name: 'usd', icon: usd, default: 1000 },
+  { name: 'eur', icon: eur, default: 1000 },
   { name: 'btc', icon: btc, default: 1 },
   { name: 'eth', icon: eth, default: 1 },
 ]
@@ -19,7 +21,7 @@ const fromOpened = ref(false)
 const toOpened = ref(false)
 
 const from = ref(currencyList[0].name)
-const to = ref(currencyList[1].name)
+const to = ref(currencyList[2].name)
 let conversionRate = ref({ conversion_rate: 0, conversion_rate_usd: 0 })
 
 onMounted(async () => {
@@ -33,7 +35,7 @@ onMounted(async () => {
   })
   const { data } = await getConversionRate(from.value, to.value)
   conversionRate.value = data
-  handleChange(conversionRate.value)
+  handleChange('from', fromValue.value)
 })
 // Dropdown logic 🎃
 function handleToggle(text) {
@@ -52,29 +54,45 @@ async function handleSelect(name, text) {
   // если совпадает с уже имеющейся валютой просто меняю местами
   if (name === from.value || name === to.value) {
     if (text === 'from') {
+      // меняю валюты
       to.value = from.value
       from.value = name
     } else {
+      // меняю валюты
       from.value = to.value
       to.value = name
     }
+    const { data } = await getConversionRate(from.value, to.value)
+    conversionRate.value = data
+    handleChange('from', fromValue.value)
   } else {
     if (text === 'from') from.value = name
     else to.value = name
-  }
 
-  const { data } = await getConversionRate(from.value, to.value)
-  conversionRate.value = data
+    const { data } = await getConversionRate(from.value, to.value)
+    conversionRate.value = data
+    handleChange('from', fromValue.value)
+  }
 }
 // Input logic 🍉
-const fromValue = ref('1')
-const toValue = ref('2')
+const fromValue = ref(currencyList[0].default)
+const toValue = ref('')
+const rate = computed(() => {
+  let output = fromValue.value * conversionRate.value.conversion_rate_usd
+  output = Math.ceil(output * (1 + 0.01) * 100) / 100
+  output = numberWithSpaces(output)
+  return output
+})
 
-function handleChange(text) {
+function handleChange(text, e) {
+  const value = parseFloat(e)
+  if (isNaN(value)) return
   if (text === 'from') {
-    //
+    fromValue.value = String(value)
+    toValue.value = String(value * conversionRate.value.conversion_rate)
   } else {
-    //
+    toValue.value = String(value)
+    fromValue.value = String(value / conversionRate.value.conversion_rate)
   }
 }
 </script>
@@ -84,7 +102,7 @@ function handleChange(text) {
     <div class="topLine"></div>
     <div class="clientText">
       <label for="">Amount i have</label>
-      <span style="margin-left: auto; opacity: 0.8; font-size: 16px">34 495 EUR</span>
+      <span style="margin-left: auto; opacity: 0.8; font-size: 16px">{{ `${fromValue} ${from.toUpperCase()}` }}</span>
     </div>
     <div class="interactive">
       <UDropdown
@@ -94,7 +112,7 @@ function handleChange(text) {
         @toggle="handleToggle('from')"
         @select="(name) => handleSelect(name, 'from')"
       />
-      <UInput autofocus :value="fromValue" @change="handleChange('from')" />
+      <UInput autofocus :value="fromValue" @change="(e) => handleChange('from', e)" />
     </div>
     <div class="clientText">I need</div>
     <div class="interactive">
@@ -105,11 +123,11 @@ function handleChange(text) {
         @toggle="handleToggle('to')"
         @select="(name) => handleSelect(name, 'to')"
       />
-      <UInput :value="toValue" @change="handleChange('to')" />
+      <UInput :value="toValue" @change="(e) => handleChange('to', e)" />
     </div>
     <div class="rate">
       <label for="" style="font-size: 24px">Rate:</label>
-      <span style="margin-left: auto">$42 950.50</span>
+      <span style="margin-left: auto">${{ rate }}</span>
     </div>
   </div>
 </template>
